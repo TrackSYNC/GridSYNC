@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="description" content="TSCC HPDE run schedule: sessions by run group, what is on track now, and what is next.">
+<title>TSCC HPDE Schedule</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B2545'/%3E%3Cpath d='M8 7v19' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M9 8h16v11H9z' fill='%23fff'/%3E%3Cpath d='M9 8h4v3.7H9zM17 8h4v3.7h-4zM13 11.7h4v3.6h-4zM21 11.7h4v3.6h-4zM9 15.3h4V19H9zM17 15.3h4V19h-4z' fill='%23C8102E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="brand-row">
+      <div class="logo-plate"><img src="assets/tscc-logo.png" alt="TSCC, Tidewater Sports Car Club" onerror="this.parentNode.classList.add('no-logo')"><span class="wordmark" aria-hidden="true"><b>TSCC</b><span>Tidewater Sports Car Club</span></span></div>
+    </div>
+    <span class="case-tag">HPDE &middot; Run Schedule</span>
+    <h1 class="title" id="eventName">HPDE Schedule</h1>
+    <div class="hero-meta" id="eventMeta"></div>
+    <div class="banner" id="eventNotice" hidden></div>
+    <div class="role-banner" id="draftBanner" hidden></div>
+    <div class="role-banner neutral no-print">Viewing as: Participant. Pick your run group to see only your sessions.</div>
+  </div>
+</header>
+<div class="flag-stripe"></div>
+
+<main id="main">
+
+  <!-- LIVE: shown on event days (or with ?now=HH:MM) -->
+  <section class="card live no-print" id="liveCard" hidden aria-live="polite">
+    <div class="section-head">
+      <div>
+        <h2 class="sec-title">Right Now</h2>
+        <div class="sec-sub" id="liveSub"></div>
+      </div>
+      <div class="head-chips" id="liveChips"></div>
+    </div>
+    <div class="live-grid" id="liveGrid"></div>
+  </section>
+
+  <!-- CONTROLS -->
+  <section class="card no-print" id="controls">
+    <div class="control-grid">
+      <div class="control-row span-all">
+        <span class="eyebrow" id="dayLabel">Day</span>
+        <div class="seg" id="dayTabs" role="group" aria-labelledby="dayLabel"></div>
+      </div>
+      <div class="control-row">
+        <span class="eyebrow" id="groupLabel">Run group</span>
+        <div class="chips" id="groupChips" role="group" aria-labelledby="groupLabel"></div>
+      </div>
+      <div class="control-row">
+        <span class="eyebrow" id="viewLabel">View</span>
+        <div class="seg inline" id="viewToggle" role="group" aria-labelledby="viewLabel">
+          <button type="button" data-view="list">Timeline</button>
+          <button type="button" data-view="grid">Grid</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section class="card" id="scheduleCard">
+    <div class="section-head">
+      <div>
+        <h2 class="sec-title" id="dayTitle">Schedule</h2>
+        <div class="sec-sub" id="daySub"></div>
+      </div>
+      <div class="head-chips">
+        <span id="dayStats" class="head-chips"></span>
+        <button type="button" class="btn btn-secondary btn-sm no-print" id="printBtn">Print</button>
+      </div>
+    </div>
+    <div id="scheduleBody"></div>
+    <div class="legend" id="legend" hidden>
+      <span><i style="background:#2E74B5"></i>Track (group color)</span>
+      <span><i style="background:#B4C6E7"></i>Classroom (light group color)</span>
+      <span><i style="background:#FFE599;outline:2px dashed rgba(21,24,29,.38);outline-offset:-3px"></i>Check-In</span>
+      <span><i style="background:#E7ECF7"></i>Meeting</span>
+      <span><i style="background:#FBF7E6;box-shadow:inset 0 0 0 1px #EBDD9A"></i>Lunch or break</span>
+      <span><i style="background:#F0EEE6"></i>Gates, tech, other</span>
+    </div>
+  </section>
+
+</main>
+
+<div class="print-area" id="printArea"></div>
+
+<footer class="disclaimer no-print">
+  <p id="footNotice">Times are track local time. This page updates when the organizers publish a change.</p>
+  <p class="foot-meta" id="footMeta"></p>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="data/schedule.js"></script>
+<script src="assets/schedule-core.js"></script>
+<script src="assets/participant.js"></script>
+</body>
+</html>

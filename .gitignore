@@ -1,0 +1,14 @@
+# Keep registration exports and working spreadsheets out of a public repository.
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+*.numbers
+
+# Local tooling
+node_modules/
+tests/screenshots/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

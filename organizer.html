@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex">
+<title>TSCC HPDE Schedule Builder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B2545'/%3E%3Cpath d='M8 7v19' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M9 8h16v11H9z' fill='%23fff'/%3E%3Cpath d='M9 8h4v3.7H9zM17 8h4v3.7h-4zM13 11.7h4v3.6h-4zM21 11.7h4v3.6h-4zM9 15.3h4V19H9zM17 15.3h4V19h-4z' fill='%23C8102E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  :root{--maxw:1080px;}
+  .steps{margin:0 0 16px;padding-left:20px;font-size:13.5px;line-height:1.6;color:var(--ink-2);}
+  .steps li{margin-bottom:4px;}
+  .steps code{background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px;}
+</style>
+</head>
+<body class="has-bar">
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="brand-row">
+      <div class="logo-plate"><img src="assets/tscc-logo.png" alt="TSCC, Tidewater Sports Car Club" onerror="this.parentNode.classList.add('no-logo')"><span class="wordmark" aria-hidden="true"><b>TSCC</b><span>Tidewater Sports Car Club</span></span></div>
+    </div>
+    <span class="case-tag">HPDE &middot; Schedule Builder</span>
+    <h1 class="title" id="eventName">Schedule Builder</h1>
+    <div class="hero-meta" id="eventMeta"></div>
+    <div class="lock-note">Build and check the run schedule here. Changes save in this browser as a draft. Export the schedule file and replace <b>data/schedule.js</b> in the GitHub repository to publish it.</div>
+    <div class="role-banner authorized">Viewing as: Organizer. Participants only see the schedule that is published in the repository.</div>
+  </div>
+</header>
+<div class="flag-stripe"></div>
+
+<main id="main">
+
+  <div class="inline-banner info" id="draftBanner" hidden>
+    <span class="ib-text" id="draftBannerText"></span>
+    <button type="button" class="btn btn-secondary btn-sm" data-action="discard">Discard draft</button>
+  </div>
+
+  <!-- EVENT DETAILS -->
+  <section class="card" id="eventCard">
+    <div class="section-head">
+      <h2 class="sec-title">Event Details</h2>
+      <span class="editchip">Editable</span>
+    </div>
+    <div class="field-grid three">
+      <div class="field">
+        <label for="evName">Event name</label>
+        <input type="text" id="evName" data-ev="name" placeholder="e.g. Oak Tree Bowl VI HPDE">
+      </div>
+      <div class="field">
+        <label for="evTrack">Track and configuration</label>
+        <input type="text" id="evTrack" data-ev="track" placeholder="e.g. VIR Full Course">
+      </div>
+      <div class="field">
+        <label for="evTz">Track time zone</label>
+        <select id="evTz" data-ev="timezone"></select>
+      </div>
+      <div class="field span-2" style="grid-column:1 / -1">
+        <label for="evNotice">Participant banner</label>
+        <textarea id="evNotice" data-ev="notice" placeholder="Optional. Shown in yellow at the top of the participant page."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- RUN SCHEDULE -->
+  <section class="card" id="scheduleCard">
+    <div class="section-head">
+      <div>
+        <h2 class="sec-title">Run Schedule</h2>
+        <div class="sec-sub">Click a block to edit it. Click an empty cell to add something for that group at that time.</div>
+      </div>
+      <span class="editchip">Editable</span>
+    </div>
+
+    <div class="day-bar">
+      <div class="seg" id="dayTabs" role="group" aria-label="Day"></div>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="add-day">+ Add day</button>
+    </div>
+
+    <div class="day-settings" id="daySettings">
+      <div class="field">
+        <label for="dayLabelInput">Day name</label>
+        <input type="text" id="dayLabelInput" placeholder="e.g. Saturday">
+      </div>
+      <div class="field">
+        <label for="dayDateInput">Date</label>
+        <input type="date" id="dayDateInput">
+      </div>
+      <div class="toolbar">
+        <button type="button" class="btn btn-secondary btn-sm" data-action="dup-day">Duplicate day</button>
+        <button type="button" class="btn btn-danger btn-sm" data-action="del-day">Delete day</button>
+      </div>
+    </div>
+
+    <div class="toolbar" style="margin-bottom:12px">
+      <button type="button" class="btn btn-navy btn-sm" data-action="add-item">+ Add item</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="rotation">Fill rotation</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="shift">Shift times</button>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="undoBtn" data-action="undo" title="Undo (Ctrl+Z)" aria-label="Undo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 14L4 9l5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10a6 6 0 010 12h-3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="redoBtn" data-action="redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 14l5-5-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 9H10a6 6 0 000 12h3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="grid-wrap" id="gridWrap"></div>
+    <p class="scroll-hint">Swipe the grid sideways to see every group.</p>
+    <div class="unplaced" id="unplaced" hidden></div>
+    <div class="legend">
+      <span><i style="background:#2E74B5"></i>Track (group color)</span>
+      <span><i style="background:#B4C6E7"></i>Classroom (light group color)</span>
+      <span><i style="background:#FFE599;outline:2px dashed rgba(21,24,29,.38);outline-offset:-3px"></i>Check-In</span>
+      <span><i style="background:#E7ECF7"></i>Meeting</span>
+      <span><i style="background:#FBF7E6;box-shadow:inset 0 0 0 1px #EBDD9A"></i>Lunch or break</span>
+      <span><i style="background:#F0EEE6"></i>Gates, tech, other</span>
+      <span><i style="background:#fff;box-shadow:inset 0 0 0 2px #C8102E"></i>Has a problem (see Checks)</span>
+    </div>
+  </section>
+
+  <!-- CHECKS -->
+  <section class="card" id="checksCard">
+    <div class="section-head">
+      <div>
+        <h2 class="sec-title">Checks</h2>
+        <div class="sec-sub">Double-booked groups, two groups on track at once, bad times, and uneven track sessions.</div>
+      </div>
+      <div class="head-chips" id="checksChips"></div>
+    </div>
+    <div id="checksBody"></div>
+  </section>
+
+  <!-- TRACK TIME -->
+  <section class="card" id="summaryCard">
+    <div class="section-head">
+      <div>
+        <h2 class="sec-title">Track Time</h2>
+        <div class="sec-sub">Sessions and minutes on track per run group. Red cells differ from the rest of that day.</div>
+      </div>
+    </div>
+    <div class="grid-wrap" id="summaryBody"></div>
+  </section>
+
+  <!-- RUN GROUPS -->
+  <section class="card" id="groupsCard">
+    <div class="section-head">
+      <div>
+        <h2 class="sec-title">Run Groups</h2>
+        <div class="sec-sub">Column order, names and colors. Track blocks use the group color. Classroom and check-in use the light color.</div>
+      </div>
+      <span class="editchip">Editable</span>
+    </div>
+    <div class="group-rows" id="groupRows"></div>
+    <div class="toolbar" style="margin-top:12px">
+      <button type="button" class="btn btn-secondary btn-sm" data-action="add-group">+ Add run group</button>
+    </div>
+  </section>
+
+  <!-- PUBLISH -->
+  <section class="card" id="publishCard">
+    <div class="section-head">
+      <div>
+        <h2 class="sec-title">Publish</h2>
+        <div class="sec-sub" id="publishSub"></div>
+      </div>
+    </div>
+    <ol class="steps">
+      <li>Click <b>Export schedule.js</b>. Your browser downloads the file.</li>
+      <li>In the GitHub repository, open the <code>data</code> folder, choose <b>Add file</b> then <b>Upload files</b>, drop in <code>schedule.js</code>, and commit.</li>
+      <li>GitHub Pages republishes the participant page, usually within a few minutes.</li>
+    </ol>
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" data-action="export">Export schedule.js</button>
+      <button type="button" class="btn btn-secondary" data-action="preview">Preview participant page</button>
+      <button type="button" class="btn btn-secondary" data-action="load">Load a schedule file</button>
+      <button type="button" class="btn btn-danger" data-action="discard">Discard draft</button>
+      <input type="file" id="fileInput" accept=".js,.json,application/json,text/javascript" hidden>
+    </div>
+  </section>
+
+</main>
+
+<footer class="disclaimer">
+  <p>Nothing on this page is public until the exported file is committed to the repository. Anyone can open this page, but only people with write access to the repository can publish.</p>
+</footer>
+
+<div class="bottom-bar">
+  <button type="button" class="status" id="statusBtn" aria-label="Go to checks">
+    <span class="dot"></span>
+    <span><span id="statusText">No conflicts</span><span class="status-sub" id="statusSub"></span></span>
+  </button>
+  <button type="button" class="btn btn-secondary hide-sm" data-action="preview">Preview</button>
+  <button type="button" class="btn btn-primary" data-action="export">Export schedule.js</button>
+</div>
+
+<!-- ITEM EDITOR -->
+<div class="modal-overlay" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="itemModalTitle">
+  <div class="modal-bubble">
+    <div class="modal-head">
+      <h3 class="modal-title" id="itemModalTitle">Edit item</h3>
+      <button type="button" class="modal-close" data-close aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-sub" id="itemModalSub"></p>
+    <div class="modal-body">
+      <div class="field-grid">
+        <div class="field">
+          <label for="imKind">Type</label>
+          <select id="imKind"></select>
+        </div>
+        <div class="field">
+          <label for="imTitle">Title</label>
+          <input type="text" id="imTitle">
+        </div>
+        <div class="field">
+          <label for="imStart">Start</label>
+          <input type="time" id="imStart">
+        </div>
+        <div class="field">
+          <label for="imEnd">End</label>
+          <input type="time" id="imEnd">
+          <div class="quick" id="imQuick" aria-label="Set length">
+            <button type="button" data-len="20">20 min</button>
+            <button type="button" data-len="25">25 min</button>
+            <button type="button" data-len="30">30 min</button>
+            <button type="button" data-len="60">1 hr</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Run groups</span>
+        <label class="check"><input type="checkbox" id="imAll"><span class="box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Everyone (applies to every run group)</label>
+        <div class="checks" id="imGroups"></div>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label for="imLocation">Location</label>
+          <input type="text" id="imLocation" placeholder="e.g. Classroom">
+        </div>
+        <div class="field">
+          <label for="imNote">Note</label>
+          <input type="text" id="imNote" placeholder="Optional">
+        </div>
+      </div>
+      <div class="modal-error" id="imError" role="alert"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger btn-sm" id="imDelete">Delete</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="imDuplicate">Duplicate</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-secondary" data-close>Cancel</button>
+        <button type="button" class="btn btn-primary" id="imSave">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROTATION -->
+<div class="modal-overlay" id="rotModal" role="dialog" aria-modal="true" aria-labelledby="rotTitle">
+  <div class="modal-bubble">
+    <div class="modal-head">
+      <h3 class="modal-title" id="rotTitle">Fill rotation</h3>
+      <button type="button" class="modal-close" data-close aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-sub" id="rotSub"></p>
+    <div class="modal-body">
+      <div class="field-grid">
+        <div class="field">
+          <label for="rotStart">First session starts</label>
+          <input type="time" id="rotStart">
+        </div>
+        <div class="field">
+          <label for="rotCount">Number of sessions</label>
+          <input type="number" id="rotCount" min="1" max="60" step="1">
+        </div>
+        <div class="field">
+          <label for="rotLen">Session length (min)</label>
+          <input type="number" id="rotLen" min="5" max="180" step="5">
+        </div>
+        <div class="field">
+          <label for="rotGap">Gap between sessions (min)</label>
+          <input type="number" id="rotGap" min="0" max="120" step="5">
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Group order</span>
+        <ol class="order-list" id="rotOrder"></ol>
+      </div>
+      <label class="check"><input type="checkbox" id="rotAvoid" checked><span class="box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Skip past lunch, anything for everyone, and existing track sessions</label>
+      <div class="preview-line" id="rotPreview"></div>
+      <div class="modal-actions">
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-secondary" data-close>Cancel</button>
+        <button type="button" class="btn btn-primary" id="rotApply">Add sessions</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHIFT -->
+<div class="modal-overlay" id="shiftModal" role="dialog" aria-modal="true" aria-labelledby="shiftTitle">
+  <div class="modal-bubble">
+    <div class="modal-head">
+      <h3 class="modal-title" id="shiftTitle">Shift times</h3>
+      <button type="button" class="modal-close" data-close aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-sub" id="shiftSub"></p>
+    <div class="modal-body">
+      <div class="inline-field">
+        <label for="shiftFrom">Items starting at or after</label>
+        <input type="time" id="shiftFrom">
+        <label for="shiftBy">move by</label>
+        <input type="number" id="shiftBy" step="5" value="10">
+        <span>minutes</span>
+      </div>
+      <div class="preview-line" id="shiftPreview"></div>
+      <div class="modal-error" id="shiftError" role="alert"></div>
+      <div class="modal-actions">
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-secondary" data-close>Cancel</button>
+        <button type="button" class="btn btn-primary" id="shiftApply">Shift items</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="modal-overlay" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="modal-bubble">
+    <div class="modal-head">
+      <h3 class="modal-title" id="confirmTitle">Are you sure?</h3>
+    </div>
+    <div class="modal-sub" id="confirmText"></div>
+    <div class="modal-actions">
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-secondary" data-close>Cancel</button>
+      <button type="button" class="btn btn-primary" id="confirmOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="data/schedule.js"></script>
+<script src="assets/schedule-core.js"></script>
+<script src="assets/organizer.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "tscc-hpde-scheduler",
+  "private": true,
+  "description": "Run schedule for Tidewater Sports Car Club HPDE events. Static pages for GitHub Pages.",
+  "scripts": {
+    "test": "node --test tests/core.test.js",
+    "test:e2e": "node tests/e2e.js",
+    "serve": "python3 -m http.server 8765"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}
