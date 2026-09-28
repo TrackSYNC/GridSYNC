@@ -459,6 +459,24 @@ table.sched tr.is-now th.t .t-b{color:#FDE2E6;}
 }
 table.sched tr.is-now th.t .now-tag{background:#fff;color:var(--red);}
 
+/* Finished time slots fold into one toggle on event days */
+.fold-btn{
+  font:inherit;
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--navy);
+  background:var(--soft);
+  border:1px dashed var(--input-line);
+  border-radius:var(--radius-sm);
+  padding:8px 12px;
+  cursor:pointer;
+}
+.fold-btn:hover{border-color:var(--navy);}
+.fold-btn[aria-expanded="false"]::before{content:'+ ';}
+.fold-btn[aria-expanded="true"]::before{content:'\2212  ';}
+table.sched tr.fold-row td{padding:8px;background:var(--card);text-align:left;}
+.tl-fold{padding:4px 0 10px;border-bottom:1px solid var(--soft);}
+
 /* ---------- Timeline ---------- */
 .tl{list-style:none;margin:0;padding:0;}
 .tl-row{
@@ -472,7 +490,7 @@ table.sched tr.is-now th.t .now-tag{background:#fff;color:var(--red);}
 .tl-row:last-child{border-bottom:none;}
 .tl-time{font-size:13px;font-weight:700;color:var(--navy);padding-top:7px;line-height:1.3;font-variant-numeric:tabular-nums;}
 .tl-time .now-tag{display:block;width:max-content;}
-.tl-time .t-b{display:block;font-weight:500;color:var(--muted);font-size:12px;}
+.tl-time .t-b{display:block;font-weight:500;color:var(--muted);font-size:12px;overflow-wrap:normal;}
 .tl-time .now-tag{margin-top:4px;}
 .tl-entries{display:flex;flex-wrap:wrap;gap:6px;min-width:0;}
 .entry{

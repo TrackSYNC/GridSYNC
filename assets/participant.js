@@ -6,7 +6,9 @@
      ?view=grid|list     start in grid or timeline view
      ?now=10:05          preview the live card at a time on the shown day
      ?now=2026-03-07T10:05  preview a specific date and time
-     ?draft=1            show the organizer's unpublished draft from this browser */
+     ?draft=1            show the organizer's unpublished draft from this browser
+   On an event day, finished time slots fold into one "Show earlier" toggle.
+   The page rechecks data/schedule.js every minute and redraws when it changes. */
 (function () {
   'use strict';
 
@@ -37,7 +39,8 @@
     day: null,
     dayAuto: true,
     group: pickGroup(params.get('group')) || pickGroup(prefs.group) || 'all',
-    view: pickView()
+    view: pickView(),
+    showPast: false
   };
   pickInitialDay();
 
@@ -106,10 +109,8 @@
     $('eventName').textContent = data.event.name;
     var meta = [data.event.track, T.fmtDateSpan(data.days)].filter(Boolean);
     $('eventMeta').innerHTML = meta.map(function (m) { return '<span>' + esc(m) + '</span>'; }).join('');
-    if (data.event.notice) {
-      $('eventNotice').textContent = data.event.notice;
-      $('eventNotice').hidden = false;
-    }
+    $('eventNotice').textContent = data.event.notice || '';
+    $('eventNotice').hidden = !data.event.notice;
     if (draft) {
       $('draftBanner').textContent = 'Draft preview from the organizer page' +
         (draft.savedAt ? ', saved ' + T.fmtStamp(draft.savedAt) : '') +
@@ -246,10 +247,12 @@
     $('dayStats').innerHTML = stats;
     var body = $('scheduleBody');
     if (state.view === 'grid') {
-      body.innerHTML = '<div class="grid-wrap">' + T.renderGrid(data, day, { highlightGroup: state.group, liveMinutes: liveMinutes }).html + '</div>' +
+      body.innerHTML = '<div class="grid-wrap">' + T.renderGrid(data, day, { highlightGroup: state.group, liveMinutes: liveMinutes,
+        foldPast: true, showPast: state.showPast }).html + '</div>' +
         '<p class="scroll-hint">Swipe the grid sideways to see every group.</p>';
     } else {
-      body.innerHTML = T.renderTimeline(data, day, { group: state.group, liveMinutes: liveMinutes });
+      body.innerHTML = T.renderTimeline(data, day, { group: state.group, liveMinutes: liveMinutes,
+        foldPast: true, showPast: state.showPast });
     }
     $('legend').hidden = state.view !== 'grid';
     var wrap = body.querySelector('.grid-wrap'), hlHead = wrap && wrap.querySelector('thead th.hl');
@@ -286,6 +289,46 @@
     document.body.classList.add('printing');
   }
 
+  /* ----------------------------------------------------- update checks */
+
+  // Reloads data/schedule.js with a cache-busting query so an open page picks up
+  // a newly published schedule. A script tag rather than fetch, so the page still
+  // works when opened from disk. Skipped for organizer draft previews.
+  var CHECK_MS = 60000;
+  var dataKey = JSON.stringify(raw);
+  var lastCheck = Date.now();
+  var checking = false;
+
+  function checkForUpdate() {
+    if (draft || checking) return;
+    checking = true;
+    lastCheck = Date.now();
+    var s = document.createElement('script');
+    s.src = 'data/schedule.js?check=' + Date.now();
+    s.onload = s.onerror = function () {
+      checking = false;
+      s.remove();
+      var next = window.TSCC_SCHEDULE;
+      var key = next ? JSON.stringify(next) : dataKey;
+      if (key === dataKey) return;
+      var fresh;
+      try { fresh = T.normalize(next); } catch (err) { return; }
+      if (!fresh.days.length) return;
+      dataKey = key;
+      data = fresh;
+      if (!T.dayById(data, state.day)) { state.dayAuto = true; pickInitialDay(); }
+      if (state.group !== 'all' && !T.groupById(data, state.group)) state.group = 'all';
+      renderHeader();
+      render();
+      var now = T.nowInZone(data.event.timezone);
+      $('updateBanner').innerHTML = '<span class="ib-text"><b>Schedule updated at ' + esc(T.fmtTime(now.minutes)) +
+        '.</b> The times below are current.</span>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-dismiss-update>Dismiss</button>';
+      $('updateBanner').hidden = false;
+    };
+    document.head.appendChild(s);
+  }
+
   function fatal(msg) {
     var main = document.getElementById('main');
     if (main) {
@@ -297,14 +340,22 @@
   /* ------------------------------------------------------------ events */
 
   document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-day],[data-group],[data-view],[data-goto-day]');
+    var t = e.target.closest('[data-day],[data-group],[data-view],[data-goto-day],[data-toggle-past],[data-dismiss-update]');
     if (!t) return;
-    if (t.hasAttribute('data-goto-day')) {
+    if (t.hasAttribute('data-dismiss-update')) {
+      $('updateBanner').hidden = true;
+      return;
+    }
+    if (t.hasAttribute('data-toggle-past')) {
+      state.showPast = !state.showPast;
+    } else if (t.hasAttribute('data-goto-day')) {
       state.day = t.getAttribute('data-goto-day');
       state.dayAuto = true;
+      state.showPast = false;
     } else if (t.hasAttribute('data-day')) {
       state.day = t.getAttribute('data-day');
       state.dayAuto = false;
+      state.showPast = false;
     } else if (t.hasAttribute('data-group')) {
       state.group = t.getAttribute('data-group');
     } else if (t.hasAttribute('data-view')) {
@@ -315,8 +366,13 @@
   $('printBtn').addEventListener('click', function () { printAll(); window.print(); });
   window.addEventListener('beforeprint', printAll);
   window.addEventListener('afterprint', function () { document.body.classList.remove('printing'); });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) render(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) return;
+    render();
+    if (Date.now() - lastCheck > 15000) checkForUpdate();
+  });
   setInterval(function () { if (!document.hidden) render(); }, 20000);
+  setInterval(function () { if (!document.hidden) checkForUpdate(); }, CHECK_MS);
 
   renderHeader();
   render();

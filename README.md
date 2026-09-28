@@ -4,7 +4,7 @@ Run schedule for Tidewater Sports Car Club HPDE events. Two static pages, no ser
 
 The live site is at https://tracksync.github.io/GridSYNC/ and the builder at https://tracksync.github.io/GridSYNC/organizer.html.
 
-- **`index.html`, participant view.** The schedule by day, filtered to one run group or all of them, as a timeline or the familiar grid. On event days a "Right Now" card shows who is on track, who is next, and the selected group's next session. Prints one page per day.
+- **`index.html`, participant view.** The schedule by day, filtered to one run group or all of them, as a timeline or the familiar grid. On event days a "Right Now" card shows who is on track, who is next, and the selected group's next session. Finished time slots fold away so the current one is at the top. An open page checks for a newly published schedule every minute and redraws with a "Schedule updated" banner. Prints one page per day.
 - **`organizer.html`, schedule builder.** Edit the grid, fill a session rotation, shift times when the day runs late, and see conflicts as you work. Exports `data/schedule.js`, which is the file you commit to publish.
 
 ## Files
@@ -18,6 +18,7 @@ assets/schedule-core.js     shared logic: times, checks, grid rendering, import 
 assets/participant.js       participant page behavior
 assets/organizer.js         organizer page behavior
 assets/tscc-logo.png        club logo, not included yet (see "Add the logo")
+assets/gridsync-logo.png    GridSync by TrackStack badge in the page footers
 tools/xlsx_to_schedule.py   converts the club's spreadsheet layout into data/schedule.js
 tests/                      unit tests, converter tests, browser tests
 ```

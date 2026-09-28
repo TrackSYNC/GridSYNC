@@ -452,6 +452,19 @@
     return states.every(function (s) { return s === 'past'; }) ? 'past' : '';
   }
 
+  // How many leading rows are finished and can fold into one toggle. Zero when
+  // fewer than two rows are done, or when the whole day is done.
+  function pastFold(rows, minutes) {
+    if (!isNum(minutes)) return 0;
+    var n = 0;
+    while (n < rows.length && rowState(rows[n], minutes) === 'past') n += 1;
+    return n >= 2 && n < rows.length ? n : 0;
+  }
+  function foldButton(n, open) {
+    return '<button type="button" class="fold-btn" data-toggle-past aria-expanded="' + !!open + '">' +
+      (open ? 'Hide earlier time slots' : 'Show ' + n + ' earlier time slots') + '</button>';
+  }
+
   function rowCells(row, data) {
     var cols = data.groups.map(function (g) { return g.id; });
     var owner = [];
@@ -497,7 +510,7 @@
 
   function labelHtml(item) { return esc(itemLabel(item)); }
 
-  // opts: { highlightGroup, liveMinutes, clickable, issueIds (object id->true), selectedId }
+  // opts: { highlightGroup, liveMinutes, clickable, issueIds (object id->true), selectedId, foldPast, showPast }
   function renderGrid(data, day, opts) {
     opts = opts || {};
     if (!data.groups.length) return { html: '<div class="empty-state">Add a run group to see the grid.</div>', unplaced: day.items.slice() };
@@ -519,7 +532,10 @@
         esc(g.name) + (g.level ? '<span class="lvl">' + esc(g.level) + '</span>' : '') + '</th>';
     });
     h += '</tr></thead><tbody>';
-    built.rows.forEach(function (row) {
+    var fold = opts.foldPast ? pastFold(built.rows, live) : 0;
+    if (fold) h += '<tr class="fold-row"><td colspan="' + (n + 1) + '">' + foldButton(fold, opts.showPast) + '</td></tr>';
+    built.rows.forEach(function (row, i) {
+      if (i < fold && !opts.showPast) return;
       var st = live === null ? '' : rowState(row, live);
       var r = fmtRange(row.start, row.end);
       h += '<tr' + (st ? ' class="is-' + st + '"' : '') + '><th scope="row" class="t"><span class="t-a">' + nb(r.a) + '</span>' +
@@ -562,7 +578,7 @@
     return { html: h, unplaced: built.unplaced };
   }
 
-  // Chronological list. opts: { group, liveMinutes }
+  // Chronological list. opts: { group, liveMinutes, foldPast, showPast }
   function renderTimeline(data, day, opts) {
     opts = opts || {};
     var group = opts.group && opts.group !== 'all' && groupById(data, opts.group) ? opts.group : null;
@@ -576,10 +592,13 @@
       return '<div class="empty-state">Nothing scheduled' + (g ? ' for ' + esc(g.name) : '') + ' on ' + esc(day.label) + '.</div>';
     }
     var h = '<ol class="tl' + (group ? ' solo' : '') + '">';
-    rows.forEach(function (row) {
+    var fold = opts.foldPast ? pastFold(rows, live) : 0;
+    if (fold) h += '<li class="tl-fold">' + foldButton(fold, opts.showPast) + '</li>';
+    rows.forEach(function (row, i) {
+      if (i < fold && !opts.showPast) return;
       var st = live === null ? '' : rowState(row, live);
       h += '<li class="tl-row' + (st ? ' is-' + st : '') + '"><div class="tl-time">' + nb(fmtTime(row.start)) +
-        (isNum(row.end) ? '<span class="t-b">to&nbsp;' + nb(fmtTime(row.end)) + '</span>' : '') +
+        (isNum(row.end) ? '<span class="t-b">to ' + nb(fmtTime(row.end)) + '</span>' : '') +
         (st === 'now' ? '<span class="now-tag">Now</span>' : '') + '</div><div class="tl-entries">';
       row.items.forEach(function (it) { h += entryHtml(it, row, data, group); });
       h += '</div></li>';
@@ -762,7 +781,7 @@
     groupById: groupById, dayById: dayById, itemGroupIds: itemGroupIds, itemLabel: itemLabel,
     groupNames: groupNames, whoText: whoText, normalize: normalize, normalizeItem: normalizeItem,
     sortItems: sortItems, blankSchedule: blankSchedule, trackSummary: trackSummary, dayHasTrack: dayHasTrack,
-    validate: validate, buildRows: buildRows, rowState: rowState, itemState: itemState, rowCells: rowCells,
+    validate: validate, buildRows: buildRows, rowState: rowState, itemState: itemState, pastFold: pastFold, rowCells: rowCells,
     paint: paint, renderGrid: renderGrid, renderTimeline: renderTimeline, liveInfo: liveInfo,
     planRotation: planRotation, itemsFrom: itemsFrom, toScheduleJs: toScheduleJs,
     parseScheduleText: parseScheduleText, store: store, download: download, toast: toast

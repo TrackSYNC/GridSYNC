@@ -10,8 +10,9 @@ const T = require('../assets/schedule-core.js');
 const BASE = process.env.BASE_URL || 'http://localhost:8765/';
 // Serve the March 2026 fixture in place of data/schedule.js so these checks do not depend on the live schedule.
 const FIXTURE = path.join(__dirname, 'fixtures', 'march-2026-schedule.js');
+const SCHEDULE_URL = /\/data\/schedule\.js(\?.*)?$/;
 async function useFixture(ctx) {
-  await ctx.route('**/data/schedule.js', (route) => route.fulfill({ path: FIXTURE, contentType: 'text/javascript' }));
+  await ctx.route(SCHEDULE_URL, (route) => route.fulfill({ path: FIXTURE, contentType: 'text/javascript' }));
 }
 const SHOTS = path.join(__dirname, 'screenshots');
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -55,6 +56,11 @@ async function noHScroll(page) {
     check('participant: grid marks the current row', (await page.$$('#scheduleBody tr.is-now')).length === 1);
     await page.click('#groupChips [data-group="green"]');
     await page.click('#viewToggle [data-view="list"]');
+    const fold = await page.textContent('#scheduleBody .fold-btn');
+    check('participant: finished slots fold on an event day', /Show \d+ earlier time slots/.test(fold), fold);
+    check('participant: folded rows are hidden', (await page.$$('#scheduleBody .tl-row.is-past')).length === 0);
+    await page.click('#scheduleBody .fold-btn');
+    check('participant: Show reveals the earlier slots', (await page.$$('#scheduleBody .tl-row.is-past')).length > 0);
     const soloEntries = await page.$$eval('#scheduleBody .entry', (els) => els.map((e) => e.textContent));
     check('participant: Green timeline has 4 track sessions on Saturday', soloEntries.filter((t) => /Track session/.test(t)).length === 4, soloEntries.join(' | '));
     check('participant: URL carries the group', /group=green/.test(page.url()), page.url());
@@ -90,6 +96,46 @@ async function noHScroll(page) {
     check('participant mobile: no horizontal scroll (grid)', await noHScroll(page));
     await page.screenshot({ path: path.join(SHOTS, 'participant-mobile-grid.png'), fullPage: true });
     check('participant: no JS errors (mobile)', errs.length === 0, errs.join('\n'));
+    await ctx.close();
+  }
+  {
+    // Folded morning on a phone, then a newly published schedule arrives while the page is open.
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, timezoneId: 'America/New_York' });
+    await useFixture(ctx);
+    const page = await ctx.newPage();
+    const errs = [];
+    watch(page, errs);
+    await page.clock.install({ time: new Date('2026-03-07T10:15:00-05:00') });
+    await page.goto(BASE + 'index.html?group=yellow&view=list', { waitUntil: 'load' });
+    await page.waitForTimeout(300);
+    check('participant fold: Yellow at 10:15 folds 5 slots', (await page.textContent('#scheduleBody .fold-btn')) === 'Show 5 earlier time slots');
+    check('participant fold: current slot is first', /10:10\sAM/.test(await page.textContent('#scheduleBody .tl-row')));
+    check('participant fold: grid folds too', await (async () => {
+      await page.click('#viewToggle [data-view="grid"]');
+      const ok = (await page.$$('#scheduleBody tr.fold-row')).length === 1;
+      await page.click('#viewToggle [data-view="list"]');
+      return ok;
+    })());
+    await page.evaluate(() => document.getElementById('scheduleCard').scrollIntoView());
+    await page.screenshot({ path: path.join(SHOTS, 'participant-mobile-folded.png') });
+
+    await page.clock.runFor(61000);
+    check('participant update: no banner when nothing changed', await page.isHidden('#updateBanner'));
+    const updated = fs.readFileSync(FIXTURE, 'utf8')
+      .replace('"notice": "Times are subject to change', '"notice": "Running 15 minutes late. Times are subject to change');
+    await ctx.unroute(SCHEDULE_URL);
+    await ctx.route(SCHEDULE_URL, (route) => route.fulfill({ body: updated, contentType: 'text/javascript' }));
+    await page.clock.runFor(61000);
+    await page.waitForTimeout(300);
+    check('participant update: banner shows after a publish', await page.isVisible('#updateBanner'));
+    check('participant update: new notice is on the page', /Running 15 minutes late/.test(await page.textContent('#eventNotice')));
+    check('participant update: keeps the selected group', (await page.getAttribute('#groupChips [data-group="yellow"]', 'aria-pressed')) === 'true');
+    check('participant update: check scripts are cleaned up', (await page.$$('script[src*="check="]')).length === 0);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: path.join(SHOTS, 'participant-mobile-updated.png') });
+    await page.click('[data-dismiss-update]');
+    check('participant update: Dismiss hides the banner', await page.isHidden('#updateBanner'));
+    check('participant update: no JS errors', errs.length === 0, errs.join('\n'));
     await ctx.close();
   }
   {
