@@ -1,6 +1,8 @@
-# GridSYNC-APP
+# GridSYNC
 
 Run schedule for Tidewater Sports Car Club HPDE events. Two static pages, no server, no build step, hosted on GitHub Pages. The look follows the TSCC Track Event Tech Inspection form.
+
+The live site is at https://tracksync.github.io/GridSYNC/ and the builder at https://tracksync.github.io/GridSYNC/organizer.html.
 
 - **`index.html`, participant view.** The schedule by day, filtered to one run group or all of them, as a timeline or the familiar grid. On event days a "Right Now" card shows who is on track, who is next, and the selected group's next session. Prints one page per day.
 - **`organizer.html`, schedule builder.** Edit the grid, fill a session rotation, shift times when the day runs late, and see conflicts as you work. Exports `data/schedule.js`, which is the file you commit to publish.
@@ -22,7 +24,7 @@ tests/                      unit tests, converter tests, browser tests
 
 ## Put it on GitHub Pages
 
-1. Create a repository under the club's GitHub account, for example `tscc-hpde-scheduler`.
+1. Create a public repository under the GitHub account or organization that will own the site. This one is `TrackSYNC/GridSYNC`.
 2. Upload the contents of this folder with the folder structure intact. On github.com that is **Add file**, then **Upload files**, drag everything in, and commit.
 3. Open **Settings**, then **Pages**. Under **Build and deployment**, set **Source** to **Deploy from a branch**, pick the `main` branch and the `/ (root)` folder, and click **Save**.
 4. The site appears at `https://<account>.github.io/<repository>/`. The builder is at `https://<account>.github.io/<repository>/organizer.html`.
@@ -34,6 +36,8 @@ GitHub Free only serves Pages from public repositories. Private repositories nee
 Both pages load `assets/tscc-logo.png` and show a text "TSCC" mark until that file exists. The logo embedded in the tech inspection form is damaged: the bottom 40% of its image data is missing, so the letters are cut off. Use a clean copy of the club logo, ideally a PNG with a transparent background at least 36 px tall.
 
 ## Publish a schedule change
+
+This repository is public, and every commit made on github.com records the uploader's commit email in its history. Before your first upload, open **Settings** on GitHub, then **Emails**, and check **Keep my email addresses private**. GitHub then records a no-reply address for your web uploads.
 
 1. Open `organizer.html` on the live site.
 2. Make the changes. The draft saves in your browser after every edit. Fix anything the **Checks** panel flags.
