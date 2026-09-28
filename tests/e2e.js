@@ -139,6 +139,33 @@ async function noHScroll(page) {
     await ctx.close();
   }
   {
+    // Right Now card shrinks to one line while the track is cold.
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await useFixture(ctx);
+    const page = await ctx.newPage();
+    const errs = [];
+    watch(page, errs);
+    const cases = [
+      ['05:00', true, /Track cold\. Gates Open at 6:00\sAM\. First session 8:30\sAM, in 3h 30m\. Yellow first on track 10:10\sAM\./],
+      ['07:00', false, /Tech\/Registration/],
+      ['12:00', false, /Lunch/],
+      ['18:00', true, /Track closed for today\. Sunday: .+ at /]
+    ];
+    for (const [time, slim, text] of cases) {
+      await page.goto(BASE + 'index.html?now=2026-03-07T' + time + '&group=yellow&view=list', { waitUntil: 'load' });
+      await page.waitForTimeout(200);
+      const isSlim = await page.$eval('#liveCard', (c) => c.classList.contains('is-slim'));
+      const shown = await page.textContent('#liveGrid');
+      check('right now ' + time + ': ' + (slim ? 'slim bar' : 'full card'), isSlim === slim, shown);
+      check('right now ' + time + ': text', text.test(shown), shown);
+      await page.screenshot({ path: path.join(SHOTS, 'participant-right-now-' + time.replace(':', '') + '.png') });
+    }
+    await page.goto(BASE + 'index.html?now=2026-03-08T18:00', { waitUntil: 'load' });
+    check('right now: last day says the event is over', /That was the last day of the event\./.test(await page.textContent('#liveGrid')));
+    check('right now: no JS errors', errs.length === 0, errs.join('\n'));
+    await ctx.close();
+  }
+  {
     // Not an event day: no live card, opens on the first day.
     const ctx = await browser.newContext({ viewport: { width: 1024, height: 800 } });
     await useFixture(ctx);

@@ -154,12 +154,68 @@
       (sub ? '<div class="live-sub">' + sub + '</div>' : '') + '</div>';
   }
 
+  // One-line text for the Right Now card while the track is cold: before the day's
+  // first item, and after the last track session once nothing else is running.
+  // Null while the day is under way.
+  function clock(min) { return esc(T.fmtTime(min)).replace(' ', '&nbsp;'); }
+
+  function coldLine(day, m, info) {
+    var first = null, lastTrack = null;
+    day.items.forEach(function (it) {
+      var s = T.parseTime(it.start), e = T.parseTime(it.end);
+      if (T.isNum(s) && (!first || s < T.parseTime(first.start))) first = it;
+      if (it.kind === 'track' && T.isNum(e) && (lastTrack === null || e > lastTrack)) lastTrack = e;
+    });
+    if (!first) return null;
+    var firstStart = T.parseTime(first.start);
+    var parts;
+    if (m < firstStart) {
+      parts = ['<b>Track cold.</b>'];
+      if (first.kind !== 'track') parts.push(esc(T.itemLabel(first)) + ' at ' + clock(firstStart) + '.');
+      if (info.nextTrack) {
+        var ts = T.parseTime(info.nextTrack.start);
+        parts.push('First session ' + clock(ts) + ', <b class="clock">' + esc(T.fmtUntil(ts - m)) + '</b>.');
+      }
+      if (state.group !== 'all') {
+        var mine = T.liveInfo(data, day, m, state.group).nextGroupTrack;
+        if (mine && mine !== info.nextTrack) {
+          parts.push(esc(T.groupById(data, state.group).name) + ' first on track ' + clock(T.parseTime(mine.start)) + '.');
+        }
+      }
+      return parts.join(' ');
+    }
+    var closed = lastTrack === null ? info.dayOver : m >= lastTrack;
+    if (!closed || info.active.length) return null;
+    parts = ['<b>Track closed for today.</b>'];
+    var next = data.days[data.days.indexOf(day) + 1];
+    var nextFirst = next && next.items.filter(function (it) { return T.isNum(T.parseTime(it.start)); })
+      .sort(function (a, b) { return T.parseTime(a.start) - T.parseTime(b.start); })[0];
+    if (nextFirst) {
+      parts.push(esc(next.label) + ': ' + esc(T.itemLabel(nextFirst)) + ' at ' + clock(T.parseTime(nextFirst.start)) + '.');
+    } else {
+      parts.push('That was the last day of the event.');
+    }
+    return parts.join(' ');
+  }
+
   function renderLive(live) {
     var card = $('liveCard');
     if (!live) { card.hidden = true; return; }
     var day = T.dayById(data, live.dayId);
     var m = live.minutes;
     var info = T.liveInfo(data, day, m, null);
+    var chips = live.preview ? '<span class="warnchip">Preview</span>' : '<span class="editchip">Live</span>';
+    if (state.day !== live.dayId) {
+      chips += '<button type="button" class="btn btn-secondary btn-sm" data-goto-day="' + esc(live.dayId) + '">Show ' + esc(day.label) + '</button>';
+    }
+    var cold = coldLine(day, m, info);
+    card.classList.toggle('is-slim', !!cold);
+    if (cold) {
+      $('liveGrid').innerHTML = '<div class="live-slim"><span class="slim-text">' + cold + '</span>' +
+        '<span class="head-chips">' + chips + '</span></div>';
+      card.hidden = false;
+      return;
+    }
     var boxes = [];
 
     if (info.onTrack) {
@@ -218,10 +274,6 @@
     $('liveGrid').innerHTML = mineBoxes.concat(boxes).join('');
     $('liveSub').textContent = day.label + (day.date ? ', ' + T.fmtMonthDay(day.date) : '') + ' at ' + T.fmtTime(m) +
       (live.preview ? ' (preview time from the link)' : '');
-    var chips = live.preview ? '<span class="warnchip">Preview</span>' : '<span class="editchip">Live</span>';
-    if (state.day !== live.dayId) {
-      chips += '<button type="button" class="btn btn-secondary btn-sm" data-goto-day="' + esc(live.dayId) + '">Show ' + esc(day.label) + '</button>';
-    }
     $('liveChips').innerHTML = chips;
     card.hidden = false;
   }

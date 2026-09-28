@@ -522,6 +522,12 @@ table.sched tr.fold-row td{padding:8px;background:var(--card);text-align:left;}
 
 /* ---------- Live card ---------- */
 section.card.live{border-color:var(--info-line);}
+/* Track cold: the Right Now card shrinks to one line */
+section.card.live.is-slim{padding:12px 16px;}
+section.card.live.is-slim .section-head{display:none;}
+section.card.live.is-slim .live-grid{display:block;}
+.live-slim{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;}
+.live-slim .slim-text{flex:1 1 220px;min-width:0;font-size:14px;line-height:1.5;color:var(--navy);}
 .live-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
 .live-box{border-radius:10px;padding:12px 14px;background:var(--soft-2);border:1px solid var(--line);min-width:0;}
 .live-box .eyebrow{display:block;margin-bottom:6px;}
