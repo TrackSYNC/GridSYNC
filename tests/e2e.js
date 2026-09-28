@@ -14,6 +14,22 @@ const SCHEDULE_URL = /\/data\/schedule\.js(\?.*)?$/;
 async function useFixture(ctx) {
   await ctx.route(SCHEDULE_URL, (route) => route.fulfill({ path: FIXTURE, contentType: 'text/javascript' }));
 }
+// Serve a lock with a known test password in place of assets/organizer-lock.js, so the
+// checks never need the real organizer password. unlocked: start with this device remembered.
+const TEST_PASSWORD = 'test-organizer-pass';
+const TEST_LOCK = (() => {
+  const salt = Buffer.from('00112233445566778899aabbccddeeff', 'hex');
+  const hash = require('crypto').pbkdf2Sync(TEST_PASSWORD, salt, 1000, 32, 'sha256').toString('hex');
+  return { salt: salt.toString('hex'), iterations: 1000, hash };
+})();
+async function useOrganizerLock(ctx, unlocked) {
+  await ctx.route('**/assets/organizer-lock.js', (route) => route.fulfill({
+    body: 'window.TSCC_ORGANIZER_LOCK = ' + JSON.stringify(TEST_LOCK) + ';', contentType: 'text/javascript'
+  }));
+  if (unlocked) {
+    await ctx.addInitScript((hash) => localStorage.setItem('tscc-hpde-organizer-unlock', JSON.stringify(hash)), TEST_LOCK.hash);
+  }
+}
 const SHOTS = path.join(__dirname, 'screenshots');
 fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -179,8 +195,40 @@ async function noHScroll(page) {
 
   /* ---------------- organizer ---------------- */
   {
+    // Password screen.
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await useFixture(ctx);
+    await useOrganizerLock(ctx, false);
+    const page = await ctx.newPage();
+    const errs = [];
+    watch(page, errs);
+    await page.goto(BASE + 'organizer.html', { waitUntil: 'load' });
+    check('gate: password screen shows first', await page.isVisible('#gate'));
+    check('gate: builder is hidden', await page.isHidden('#main') && await page.isHidden('.bottom-bar'));
+    check('gate: builder code has not loaded', !(await page.$('script[src="assets/organizer.js"]')));
+    await page.screenshot({ path: path.join(SHOTS, 'organizer-gate.png') });
+    await page.fill('#gatePassword', 'wrong-password');
+    await page.click('#gateSubmit');
+    await page.waitForSelector('#gateError:not([hidden])');
+    check('gate: wrong password is refused', /not right/.test(await page.textContent('#gateError')) && await page.isHidden('#main'));
+    await page.fill('#gatePassword', TEST_PASSWORD);
+    await page.click('#gateSubmit');
+    await page.waitForSelector('#dayTabs [data-day]');
+    check('gate: right password opens the builder', await page.isVisible('#main') && await page.isHidden('#gate'));
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForTimeout(200);
+    check('gate: device is remembered after a reload', await page.isVisible('#main'));
+    await page.click('#lockDevice');
+    await page.waitForLoadState('load');
+    await page.waitForTimeout(200);
+    check('gate: Lock this device brings the screen back', await page.isVisible('#gate') && await page.isHidden('#main'));
+    check('gate: no JS errors', errs.length === 0, errs.join('\n'));
+    await ctx.close();
+  }
+  {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
     await useFixture(ctx);
+    await useOrganizerLock(ctx, true);
     const page = await ctx.newPage();
     const errs = [];
     watch(page, errs);
@@ -305,6 +353,7 @@ async function noHScroll(page) {
   {
     const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     await useFixture(ctx);
+    await useOrganizerLock(ctx, true);
     const page = await ctx.newPage();
     const errs = [];
     watch(page, errs);

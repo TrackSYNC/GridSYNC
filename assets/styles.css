@@ -244,6 +244,19 @@ footer.disclaimer p{
   margin:0;
 }
 footer.disclaimer .foot-meta{background:none;color:var(--muted);font-weight:500;padding:10px 2px 0;}
+footer.disclaimer .gate-lock{display:flex;justify-content:center;padding-top:14px;}
+
+/* Organizer password screen. body.locked hides the builder until organizer-gate.js unlocks it. */
+.gate{max-width:420px;width:calc(100% - 32px);margin:28px auto 0;}
+.gate-note{font-size:14px;color:var(--ink-2);margin:6px 0 16px;line-height:1.5;}
+.gate form{display:flex;flex-direction:column;gap:16px;align-items:flex-start;}
+.gate .field{width:100%;}
+.gate-remember{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-2);}
+.gate .inline-banner{margin-top:16px;}
+body:not(.locked) .gate,
+body.locked main,body.locked .bottom-bar,body.locked footer.disclaimer > p,body.locked .gate-lock,
+body.locked .lock-note,body.locked .role-banner{display:none;}
+body.locked.has-bar{padding-bottom:0;}
 footer.disclaimer .made-by{display:flex;justify-content:center;padding-top:18px;}
 footer.disclaimer .made-by img{display:block;height:36px;width:auto;border-radius:var(--radius-sm);}
 
@@ -576,6 +589,7 @@ section.card.live.is-slim .live-grid{display:block;}
   color:var(--muted);
 }
 .field input[type=text],
+.field input[type=password],
 .field input[type=date],
 .field input[type=time],
 .field input[type=number],

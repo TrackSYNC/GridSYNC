@@ -17,9 +17,12 @@ assets/styles.css           shared theme (tokens and components from the tech in
 assets/schedule-core.js     shared logic: times, checks, grid rendering, import and export
 assets/participant.js       participant page behavior
 assets/organizer.js         organizer page behavior
+assets/organizer-gate.js    organizer password screen
+assets/organizer-lock.js    salted hash of the organizer password (see "Organizer password")
 assets/tscc-logo.png        club logo, not included yet (see "Add the logo")
 assets/gridsync-logo.png    GridSync by TrackStack badge in the page footers
 tools/xlsx_to_schedule.py   converts the club's spreadsheet layout into data/schedule.js
+tools/set_organizer_password.py  sets the organizer password
 tests/                      unit tests, converter tests, browser tests
 ```
 
@@ -47,7 +50,19 @@ This repository is public, and every commit made on github.com records the uploa
 5. In the repository, open the `data` folder, choose **Add file**, then **Upload files**, drop in `schedule.js`, and commit. It replaces the old file.
 6. GitHub Pages republishes the site, usually within a few minutes. GitHub says it can take up to 10.
 
-Anyone can open the organizer page, but it cannot change the live schedule on its own. Only people with write access to the repository can publish.
+The organizer page cannot change the live schedule on its own. Only people with write access to the repository can publish.
+
+### Organizer password
+
+The organizer page asks for a password before it loads the builder. Tick **Remember this device** to skip it next time, and use **Lock this device** at the bottom of the page on a shared computer.
+
+To set or change the password, run this from the repository folder, then commit and push `assets/organizer-lock.js`:
+
+```
+python tools/set_organizer_password.py
+```
+
+The file holds a salted hash, not the password. The password keeps casual visitors out, but it is not real security: the code and the hash are public, so use a password that is not used anywhere else. Changing it signs out every remembered device.
 
 ### Organizer tools
 

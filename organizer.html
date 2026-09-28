@@ -18,7 +18,7 @@
   .steps code{background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px;}
 </style>
 </head>
-<body class="has-bar">
+<body class="has-bar locked">
 
 <header class="hero">
   <div class="hero-inner">
@@ -33,6 +33,21 @@
   </div>
 </header>
 <div class="flag-stripe"></div>
+
+<!-- Password screen. assets/organizer-gate.js loads organizer.js after the password checks out. -->
+<section class="card gate" id="gate">
+  <h2 class="sec-title">Organizers only</h2>
+  <p class="gate-note">Enter the organizer password to open the schedule builder.</p>
+  <form id="gateForm" autocomplete="off">
+    <div class="field">
+      <label for="gatePassword">Organizer password</label>
+      <input type="password" id="gatePassword" autocomplete="current-password" required>
+    </div>
+    <label class="gate-remember"><input type="checkbox" id="gateRemember" checked> Remember this device</label>
+    <button type="submit" class="btn btn-primary" id="gateSubmit">Open the builder</button>
+  </form>
+  <p class="inline-banner err" id="gateError" role="alert" hidden></p>
+</section>
 
 <main id="main">
 
@@ -187,7 +202,8 @@
 </main>
 
 <footer class="disclaimer">
-  <p>Nothing on this page is public until the exported file is committed to the repository. Anyone can open this page, but only people with write access to the repository can publish.</p>
+  <p>Nothing on this page is public until the exported file is committed to the repository. Only people with write access to the repository can publish.</p>
+  <div class="gate-lock"><button type="button" class="btn btn-secondary btn-sm" id="lockDevice">Lock this device</button></div>
   <div class="made-by"><img src="assets/gridsync-logo.png" alt="GridSync by TrackStack" width="183" height="36"></div>
 </footer>
 
@@ -348,6 +364,7 @@
 
 <script src="data/schedule.js"></script>
 <script src="assets/schedule-core.js"></script>
-<script src="assets/organizer.js"></script>
+<script src="assets/organizer-lock.js"></script>
+<script src="assets/organizer-gate.js"></script>
 </body>
 </html>
