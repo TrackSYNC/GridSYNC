@@ -244,6 +244,8 @@ footer.disclaimer p{
   margin:0;
 }
 footer.disclaimer .foot-meta{background:none;color:var(--muted);font-weight:500;padding:10px 2px 0;}
+footer.disclaimer .made-by{display:flex;justify-content:center;padding-top:18px;}
+footer.disclaimer .made-by img{display:block;height:36px;width:auto;border-radius:var(--radius-sm);}
 
 /* ---------- Buttons ---------- */
 .btn{
