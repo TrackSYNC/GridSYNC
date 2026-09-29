@@ -12,3 +12,6 @@ __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+
+# Claude session notes stay local, the repository is public
+CLAUDE.md
