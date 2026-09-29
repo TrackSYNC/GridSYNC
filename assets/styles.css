@@ -39,6 +39,8 @@
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;overflow-x:hidden;}
+/* clip, not hidden, on body: hidden makes body a scroll box and breaks the sticky track status bar */
+body{overflow-x:clip;}
 body{
   background:var(--paper);
   color:var(--ink);
@@ -143,6 +145,49 @@ h1.title{
   padding:11px 14px;
   border-radius:var(--radius-sm);
   margin-top:16px;
+}
+/* ---------- Track status bar (participant page) ----------
+   Rows animate from 0fr to 1fr so the bar slides open and the delay details
+   fold away when the track goes green. */
+.track-status{
+  position:sticky; top:0; z-index:40;
+  display:grid; grid-template-rows:0fr;
+  transition:grid-template-rows .45s ease;
+}
+.track-status.is-on{grid-template-rows:1fr;}
+.ts-clip{overflow:hidden;min-height:0;}
+.ts-bar{
+  background:var(--red);
+  color:#fff;
+  padding:12px 20px 14px;
+  box-shadow:0 4px 14px rgba(7,26,51,.28);
+  transition:background-color .45s ease,padding .45s ease;
+}
+.track-status.is-green .ts-bar{background:var(--ok);padding:9px 20px;}
+.ts-line{max-width:var(--maxw);margin:0 auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;}
+.ts-dot{
+  width:10px;height:10px;border-radius:50%;background:#fff;flex:none;align-self:center;
+  animation:tsPulse 1.3s ease-in-out infinite;
+}
+.track-status.is-green .ts-dot{animation:none;}
+@keyframes tsPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.7);}}
+.ts-head{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:21px;
+  letter-spacing:.06em;text-transform:uppercase;line-height:1.1;
+}
+.ts-note{font-size:14px;font-weight:600;line-height:1.35;opacity:.95;}
+.ts-more{
+  max-width:var(--maxw);margin:0 auto;
+  display:grid;grid-template-rows:1fr;
+  transition:grid-template-rows .45s ease,opacity .3s ease;
+}
+.track-status.is-green .ts-more{grid-template-rows:0fr;opacity:0;}
+.ts-more-inner{overflow:hidden;min-height:0;}
+.ts-msg{margin:6px 0 0 20px;font-size:15px;font-weight:600;line-height:1.45;}
+.ts-meta{margin:4px 0 0 20px;font-size:12.5px;line-height:1.4;opacity:.85;}
+@media (prefers-reduced-motion:reduce){
+  .track-status,.ts-bar,.ts-more{transition:none;}
+  .ts-dot{animation:none;}
 }
 .role-banner{
   background:#FBE7E5;

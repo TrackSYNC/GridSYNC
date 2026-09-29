@@ -79,6 +79,23 @@
         <label for="evNotice">Participant banner</label>
         <textarea id="evNotice" data-ev="notice" placeholder="Optional. Shown in yellow at the top of the participant page."></textarea>
       </div>
+      <div class="field">
+        <label for="evStatus">Track status</label>
+        <select id="evStatus" data-status="state">
+          <option value="">Normal, no bar</option>
+          <option value="delay">Delay</option>
+          <option value="green">Track green</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="evStatusMin">Delay length (minutes)</label>
+        <input type="number" id="evStatusMin" data-status="minutes" min="0" step="5" placeholder="e.g. 20">
+      </div>
+      <div class="field">
+        <label for="evStatusMsg">Status message</label>
+        <input type="text" id="evStatusMsg" data-status="message" placeholder="e.g. Car off at Turn 3. Sessions move back 20 minutes.">
+      </div>
+      <p class="sec-sub" style="grid-column:1 / -1;margin:0">A delay shows as a red bar at the top of the participant page. Track green folds it to a slim green line for 30 minutes. Use Shift times to move the sessions, then publish.</p>
     </div>
   </section>
 

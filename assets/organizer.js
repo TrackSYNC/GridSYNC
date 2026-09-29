@@ -182,6 +182,12 @@
     setVal($('evName'), ev.name);
     setVal($('evTrack'), ev.track);
     setVal($('evNotice'), ev.notice);
+    var st = ev.status || null;
+    setVal($('evStatus'), st ? st.state : '');
+    setVal($('evStatusMin'), st && st.minutes ? String(st.minutes) : '');
+    setVal($('evStatusMsg'), st ? st.message : '');
+    $('evStatusMin').disabled = !st || st.state !== 'delay';
+    $('evStatusMsg').disabled = !st;
     var tz = $('evTz');
     if (document.activeElement !== tz) {
       var opts = TIMEZONES.slice();
@@ -928,6 +934,26 @@
     if (t.hasAttribute('data-ev')) {
       var key = t.getAttribute('data-ev'), v = t.value.trim();
       commit(function (data) { if (key === 'name' && !v) return; data.event[key] = v; });
+      return;
+    }
+    if (t.hasAttribute('data-status')) {
+      var sk = t.getAttribute('data-status'), sv = t.value.trim();
+      commit(function (data) {
+        var st = data.event.status || { state: '', minutes: 0, message: '', at: '' };
+        if (sk === 'state') {
+          if (!sv) { delete data.event.status; return; }
+          if (sv === st.state) return;
+          // A new state gets a new time. Track green starts with an empty message.
+          st.at = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+          if (sv === 'green') { st.message = ''; st.minutes = 0; }
+          st.state = sv;
+        } else if (sk === 'minutes') {
+          st.minutes = Number(sv) || 0;
+        } else {
+          st.message = sv;
+        }
+        if (st.state) data.event.status = st;
+      });
       return;
     }
     if (t.id === 'dayLabelInput') {

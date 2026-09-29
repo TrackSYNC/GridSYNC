@@ -14,6 +14,16 @@
 </head>
 <body>
 
+<!-- Track status: a delay bar that folds to a slim green line when the track goes green -->
+<div class="track-status no-print" id="trackStatus" role="status" aria-live="polite">
+  <div class="ts-clip">
+    <div class="ts-bar">
+      <div class="ts-line"><span class="ts-dot" aria-hidden="true"></span><b class="ts-head" id="tsHead"></b><span class="ts-note" id="tsNote"></span></div>
+      <div class="ts-more"><div class="ts-more-inner"><p class="ts-msg" id="tsMsg"></p><p class="ts-meta" id="tsMeta"></p></div></div>
+    </div>
+  </div>
+</div>
+
 <header class="hero">
   <div class="hero-inner">
     <div class="brand-row">

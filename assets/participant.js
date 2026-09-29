@@ -8,6 +8,8 @@
      ?now=2026-03-07T10:05  preview a specific date and time
      ?draft=1            show the organizer's unpublished draft from this browser
    On an event day, finished time slots fold into one "Show earlier" toggle.
+   event.status puts a bar at the top: a delay, or a slim "Track green" line for
+   30 minutes after the delay clears. Either one only shows on the day it was set.
    The page rechecks data/schedule.js every minute and redraws when it changes. */
 (function () {
   'use strict';
@@ -121,6 +123,33 @@
       '). This page updates when the organizers publish a change.';
     var stamp = T.fmtStamp(data.updatedAt);
     $('footMeta').textContent = stamp ? 'Schedule last published ' + stamp + '.' : '';
+  }
+
+  var GREEN_MS = 30 * 60000;
+
+  // The bar keeps its DOM between renders so the switch from delay to green
+  // animates: the details fold away and the red turns green.
+  function renderStatus() {
+    var el = $('trackStatus'), st = data.event.status, tz = data.event.timezone;
+    var at = st && st.at ? new Date(st.at) : null;
+    var show = !!st;
+    if (show && at) {
+      show = T.nowInZone(tz, at).date === T.nowInZone(tz).date;
+      if (st.state === 'green') show = show && Date.now() - at.getTime() < GREEN_MS;
+    }
+    el.classList.toggle('is-on', show);
+    if (!show) return;
+    var clockAt = at ? T.fmtTime(T.nowInZone(tz, at).minutes) : '';
+    el.classList.toggle('is-green', st.state === 'green');
+    if (st.state === 'delay') {
+      $('tsHead').textContent = 'Track delay';
+      $('tsNote').textContent = st.minutes ? 'About ' + T.fmtDuration(st.minutes) : '';
+      $('tsMsg').textContent = st.message || 'Sessions are on hold. Stay near your car.';
+      $('tsMeta').textContent = clockAt ? 'Posted ' + clockAt + '. This bar changes when the track goes green.' : '';
+    } else {
+      $('tsHead').textContent = 'Track green';
+      $('tsNote').textContent = (clockAt ? clockAt + '. ' : '') + (st.message || 'Sessions run on the times below.');
+    }
   }
 
   function renderControls() {
@@ -316,6 +345,7 @@
   function render() {
     var live = liveContext();
     if (live && state.dayAuto && !preview && state.day !== live.dayId) state.day = live.dayId;
+    renderStatus();
     renderControls();
     renderLive(live);
     renderSchedule(live && live.dayId === state.day ? live.minutes : null);
@@ -348,6 +378,14 @@
   // works when opened from disk. Skipped for organizer draft previews.
   var CHECK_MS = 60000;
   var dataKey = JSON.stringify(raw);
+  // The schedule without the track status, so a status change alone does not
+  // also raise the "Schedule updated" banner.
+  function scheduleKey(obj) {
+    var c = T.clone(obj);
+    c.updatedAt = '';
+    if (c.event) delete c.event.status;
+    return JSON.stringify(c);
+  }
   var lastCheck = Date.now();
   var checking = false;
 
@@ -366,12 +404,14 @@
       var fresh;
       try { fresh = T.normalize(next); } catch (err) { return; }
       if (!fresh.days.length) return;
+      var timesChanged = scheduleKey(fresh) !== scheduleKey(data);
       dataKey = key;
       data = fresh;
       if (!T.dayById(data, state.day)) { state.dayAuto = true; pickInitialDay(); }
       if (state.group !== 'all' && !T.groupById(data, state.group)) state.group = 'all';
       renderHeader();
       render();
+      if (!timesChanged) return;
       var now = T.nowInZone(data.event.timezone);
       $('updateBanner').innerHTML = '<span class="ib-text"><b>Schedule updated at ' + esc(T.fmtTime(now.minutes)) +
         '.</b> The times below are current.</span>' +

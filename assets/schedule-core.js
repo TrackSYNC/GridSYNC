@@ -246,6 +246,20 @@
     };
   }
 
+  // Live track status shown as a bar at the top of the participant page.
+  // state: 'delay' or 'green'. at: ISO time the organizer set it.
+  var STATUS_STATES = { delay: true, green: true };
+  function normStatus(st) {
+    if (!st || typeof st !== 'object' || !STATUS_STATES[st.state]) return null;
+    var mins = Math.round(Number(st.minutes));
+    return {
+      state: st.state,
+      minutes: isFinite(mins) && mins > 0 ? Math.min(mins, 600) : 0,
+      message: str(st.message).trim(),
+      at: isNaN(Date.parse(st.at)) ? '' : str(st.at).trim()
+    };
+  }
+
   function normalize(raw) {
     var src = raw && typeof raw === 'object' ? clone(raw) : {};
     var ev = src.event && typeof src.event === 'object' ? src.event : {};
@@ -261,6 +275,8 @@
       groups: [],
       days: []
     };
+    var status = normStatus(ev.status);
+    if (status) out.event.status = status;
     var seenGroups = {};
     (Array.isArray(src.groups) ? src.groups : []).forEach(function (g) {
       if (!g || typeof g !== 'object') return;
