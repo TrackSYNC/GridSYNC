@@ -20,7 +20,7 @@ assets/organizer.js         organizer page behavior
 assets/organizer-gate.js    organizer password screen
 assets/organizer-lock.js    salted hash of the organizer password (see "Organizer password")
 assets/tscc-logo.png        club logo, not included yet (see "Add the logo")
-assets/gridsync-logo.png    GridSync by TrackStack badge in the page footers
+assets/gridsync-logo.png    GridSync by TrackStackLabs badge in the page footers
 tools/xlsx_to_schedule.py   converts the club's spreadsheet layout into data/schedule.js
 tools/set_organizer_password.py  sets the organizer password
 tests/                      unit tests, converter tests, browser tests
