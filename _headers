@@ -1,0 +1,18 @@
+# Cloudflare Pages response headers. Not used by GitHub Pages.
+
+# The live schedule, including the track status bar. Phones must never be
+# served an old copy: every request revalidates, and an unchanged file comes
+# back as a small 304.
+/data/schedule.js
+  Cache-Control: no-cache
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Pages serves organizer.html at /organizer, so match both.
+/organizer
+  X-Frame-Options: DENY
+
+/organizer.html
+  X-Frame-Options: DENY
