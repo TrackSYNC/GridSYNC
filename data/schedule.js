@@ -7,13 +7,7 @@ window.TSCC_SCHEDULE = {
     "name": "Oak Tree Bowl VI HPDE",
     "track": "VIR Full Course",
     "timezone": "America/New_York",
-    "notice": "Times are subject to change. Check this page for updates during the event.",
-    "status": {
-      "state": "delay",
-      "minutes": 1,
-      "message": "TEST - timed test at 12:55:00, clears at 12:55:30",
-      "at": "2026-10-09T16:55:00Z"
-    }
+    "notice": "Times are subject to change. Check this page for updates during the event."
   },
   "groups": [
     {
