@@ -10,7 +10,7 @@
    On an event day, finished time slots fold into one "Show earlier" toggle.
    event.status puts a bar at the top: a delay, or a slim "Track green" line for
    30 minutes after the delay clears. Either one only shows on the day it was set.
-   The page rechecks data/schedule.js every minute and redraws when it changes. */
+   The page rechecks data/schedule.js every 15 seconds and redraws when it changes. */
 (function () {
   'use strict';
 
@@ -376,7 +376,7 @@
   // Reloads data/schedule.js with a cache-busting query so an open page picks up
   // a newly published schedule. A script tag rather than fetch, so the page still
   // works when opened from disk. Skipped for organizer draft previews.
-  var CHECK_MS = 60000;
+  var CHECK_MS = 15000;
   var dataKey = JSON.stringify(raw);
   // The schedule without the track status, so a status change alone does not
   // also raise the "Schedule updated" banner.
